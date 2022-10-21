@@ -1,1 +1,1 @@
-# cpu_8bits_vhdl
+# cpu_octobits
