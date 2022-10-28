@@ -12,9 +12,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.utils.all;
+use work.utils_pkg.all;
 
-use std.env.finish;
+--use std.env.finish;
 
 ----------------------------------------------------------------------------------
 -- Entity
@@ -95,7 +95,7 @@ begin
             end loop;
             wait for clk_period_ns_c;
         end loop;
-        finish;  
+        --finish;  
     end process;
 
 end tb;

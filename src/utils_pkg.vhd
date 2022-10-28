@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-package utils is
+package utils_pkg is
 
     constant data_width_c : integer	:= 8;
 
