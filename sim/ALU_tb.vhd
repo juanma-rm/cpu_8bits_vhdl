@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 
 use work.utils_pkg.all;
 
---use std.env.finish;
+use std.env.finish;
 
 ----------------------------------------------------------------------------------
 -- Entity
@@ -34,7 +34,6 @@ architecture tb of ALU_tb is
     signal rst_s : std_logic;
 
     signal operation_s  : alu_op_t;
-    signal operation_n_s: integer;
     signal operand_a_s  : std_logic_vector(data_width_c - 1 downto 0);
     signal operand_b_s  : std_logic_vector(data_width_c - 1 downto 0);
     signal result_s     : std_logic_vector(data_width_c - 1 downto 0);
@@ -48,6 +47,59 @@ architecture tb of ALU_tb is
         2 => (2**data_width_c - 1, 1),
         3 => (1, 2**data_width_c - 1)
     );
+
+    -- report current operands / operation / result
+    
+    procedure report_header is
+    begin
+        report HT&HT & "operation" & HT&HT & "operandA" & HT&HT & "operandB" & HT&HT & "result" & HT&HT & "operandA" & HT&HT & "operandB" & HT&HT & "result";
+    end procedure; 
+
+    procedure report_current_op ( 
+        opA       : in std_logic_vector(data_width_c - 1 downto 0);
+        opB       : in std_logic_vector(data_width_c - 1 downto 0);
+        operation : in alu_op_t;
+        result    : in std_logic_vector(data_width_c - 1 downto 0)
+    ) is 
+    begin
+        report HT&HT &
+            to_string(operation)                    & HT&HT & 
+            -- std logic vector
+            to_string(opA) & HT&HT & to_string(opB) & HT&HT & to_string(result) & HT&HT &
+            -- unsigned
+            to_string(to_integer(unsigned(opA)))    & HT&HT & 
+            to_string(to_integer(unsigned(opB)))    & HT&HT &
+            to_string(to_integer(unsigned(result))) ;
+    end procedure;
+
+    -- check output
+    procedure check_result ( 
+        opA       : in std_logic_vector(data_width_c - 1 downto 0);
+        opB       : in std_logic_vector(data_width_c - 1 downto 0);
+        operation : in alu_op_t;
+        result    : in std_logic_vector(data_width_c - 1 downto 0)
+    ) is 
+
+        variable opA_sig_v, opB_sig_v, result_sig_v : signed(data_width_c - 1 downto 0);
+        variable test_passed_v : boolean := false;
+
+    begin
+
+        case operation is
+            when alu_add  => test_passed_v := signed(result) = signed(opA) + signed(opB);
+            when alu_sub  => test_passed_v := signed(result) = signed(opA) - signed(opB);
+            when alu_not  => test_passed_v := result = not opA; 
+            when alu_or   => test_passed_v := result = (opA or opB);
+            when alu_and  => test_passed_v := result = (opA and opB);
+            when alu_nor  => test_passed_v := result = (opA nor opB);
+            when alu_nand => test_passed_v := result = (opA nand opB);
+            when alu_xor  => test_passed_v := result = (opA xor opB);
+            when others   => test_passed_v := false;
+        end case;
+
+        assert (test_passed_v) severity failure;
+
+    end procedure;
 
 begin
 
@@ -81,6 +133,7 @@ begin
     alu_stim_proc : process
     begin
         wait for 30*clk_period_ns_c;
+        report_header;
         for operands_iter in operands_list_c'range loop
             -- Select operands
             operand_a_s <= std_logic_vector(to_signed(operands_list_c(operands_iter)(0), data_width_c));
@@ -88,14 +141,13 @@ begin
             -- Iterate along all operators
             for operation in alu_op_t'left to alu_op_t'right loop
                 operation_s <= operation;
-
-                operation_n_s <= alu_op_t'pos(operation);
-
                 wait for clk_period_ns_c;
+                report_current_op(operand_a_s, operand_b_s, operation_s, result_s);
+                check_result(operand_a_s, operand_b_s, operation_s, result_s);
             end loop;
             wait for clk_period_ns_c;
         end loop;
-        --finish;  
+        finish;  
     end process;
 
 end tb;
