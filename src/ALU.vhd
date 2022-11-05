@@ -4,7 +4,7 @@
 
 --! Inputs: operand_a_i, operand_b_i, operation_i, clk_i
 --! Outputs: result_o, status_o_FLAG(C, Z, ...)
---! Operators: alu_nop, alu_add, alu_sub, alu_not, alu_or, alu_and, alu_nor, alu_nand, alu_xor
+--! Operators: alu_add, alu_sub, alu_not, alu_or, alu_and, alu_nor, alu_nand, alu_xor
 
 --! @todo: check all flags when needed, improve test
 ----------------------------------------------------------------------------------
@@ -64,7 +64,6 @@ begin
             negative_v    := '0';
 
             case (operation_i) is 
-                when alu_nop =>
 
                 -- result = a + b
                 when alu_add => 
@@ -96,12 +95,8 @@ begin
                 -- result = a xor b
                 when alu_xor =>
                     result_lv_v := operand_a_i xor operand_b_i;                     
-                -- when others =>
-                --     result_sign_v := to_signed(0, data_width_g + 1);
-                --     result_lv_v   := std_logic_vector(to_unsigned(0, data_width_g));
-                --     carry_v       := '0';
-                --     zero_v        := '0';
-                --     negative_v    := '0';
+                when others =>
+
             end case;
 
             -- Output assignment
