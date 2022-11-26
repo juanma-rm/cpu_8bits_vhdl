@@ -12,26 +12,41 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library src_lib;
 use work.utils_pkg.all;
 
-use std.env.finish;
+-- Vunit
+library vunit_lib;
+context vunit_lib.vunit_context;
+-- context vunit_lib.com_context; -- where "net" is defined
 
 ----------------------------------------------------------------------------------
 -- Entity
 ----------------------------------------------------------------------------------
 
 entity ALU_tb is
-end ALU_tb;
+    generic (
+        runner_cfg     : string;
+        data_width_g   : integer := 8
+    );
+end;
 
 ----------------------------------------------------------------------------------
 -- Architecture
 ----------------------------------------------------------------------------------
 
-architecture tb of ALU_tb is
+architecture bench of ALU_tb is
 
-    constant clk_period_ns_c : time := 100 ns;
-    signal clk_s : std_logic;
-    signal rst_s : std_logic;
+    -- Constants
+
+
+    -- Clock and reset
+
+    constant clk_period_ns_c : time := 10 ns; -- 100 MHz
+    signal clk_s    : std_ulogic := '0';
+    signal rst_s    : std_ulogic := '0';
+
+    -- dut signals
 
     signal operation_s  : alu_op_t;
     signal operand_a_s  : std_logic_vector(data_width_c - 1 downto 0);
@@ -48,8 +63,13 @@ architecture tb of ALU_tb is
         3 => (1, 2**data_width_c - 1)
     );
 
+    -- Sync signals
+    signal start_s       : boolean := false;
+    signal done_s        : boolean := false;
+    signal stim_done_s   : boolean := false;
+
     -- report current operands / operation / result
-    
+
     procedure report_header is
     begin
         report HT&HT & "operation" & HT&HT & "operandA" & HT&HT & "operandB" & HT&HT & "result" & HT&HT & "operandA" & HT&HT & "operandB" & HT&HT & "result";
@@ -73,6 +93,7 @@ architecture tb of ALU_tb is
     end procedure;
 
     -- check output
+
     procedure check_result ( 
         opA       : in std_logic_vector(data_width_c - 1 downto 0);
         opB       : in std_logic_vector(data_width_c - 1 downto 0);
@@ -97,13 +118,48 @@ architecture tb of ALU_tb is
             when others   => test_passed_v := false;
         end case;
 
-        assert (test_passed_v) severity failure;
+        check_equal(test_passed_v, true, "result does not match expected value");
 
     end procedure;
 
 begin
 
-    -- ALU instance
+    --------------------------------------------------------------
+    -- Clock and reset
+    --------------------------------------------------------------
+
+    clk_s    <= not clk_s after clk_period_ns_c/2;
+    rst_s <= '0', '1' after 10*clk_period_ns_c, '0' after 20*clk_period_ns_c;
+
+    --------------------------------------------------------------
+    -- Main process
+    --------------------------------------------------------------
+
+    main : process
+    begin
+        
+        -- Common code between tests here
+        test_runner_setup(runner, runner_cfg);
+        set_stop_level(failure);
+        wait for 500 ns;
+       
+        -- Specific code depending the test
+        while test_suite loop
+            if run("alu_test1") then
+                start_s <= true;
+            end if;
+        end loop;
+
+        -- Common code between tests here
+        wait until done_s;
+        test_runner_cleanup(runner);
+
+    end process main;
+
+    --------------------------------------------------------------
+    -- DUT and other instances
+    --------------------------------------------------------------
+
     ALU_inst : entity work.ALU
     generic map (
         data_width_g => data_width_c
@@ -117,22 +173,16 @@ begin
         status_o    => status_s
     );
 
-    -- clk and reset stimulation
+    --------------------------------------------------------------
+    -- Stimulus
+    --------------------------------------------------------------
 
-    clk_proc : process
+    stimulus : process
     begin
-        clk_s <= '0';
-        wait for clk_period_ns_c/2;
-        clk_s <= '1';
-        wait for clk_period_ns_c/2;
-    end process;
 
-    rst_s <= '0', '1' after 10*clk_period_ns_c, '0' after 20*clk_period_ns_c;
+        wait until start_s and rising_edge(clk_s);
+        info("Stimulus: start_sing...");
 
-    -- ALU stimulation
-    alu_stim_proc : process
-    begin
-        wait for 30*clk_period_ns_c;
         report_header;
         for operands_iter in operands_list_c'range loop
             -- Select operands
@@ -140,14 +190,37 @@ begin
             operand_b_s <= std_logic_vector(to_signed(operands_list_c(operands_iter)(1), data_width_c));
             -- Iterate along all operators
             for operation in alu_op_t'left to alu_op_t'right loop
-                operation_s <= operation;
-                wait for clk_period_ns_c;
+                wait until rising_edge(clk_s);
+                operation_s <= operation;     -- Input read at the next active clock edge
+                wait for 2*clk_period_ns_c; -- Output available 2 cycles ahead from now
                 report_current_op(operand_a_s, operand_b_s, operation_s, result_s);
                 check_result(operand_a_s, operand_b_s, operation_s, result_s);
             end loop;
             wait for clk_period_ns_c;
         end loop;
-        finish;  
+
+        info("Stimulus done_s!");
+        stim_done_s <= true;
+        wait;
+
     end process;
 
-end tb;
+    --------------------------------------------------------------
+    -- Check
+    --------------------------------------------------------------
+
+    check_proc : process
+    begin
+
+        wait until stim_done_s and rising_edge(clk_s);
+        info("Data: checking...");
+
+        info("Data was already checked. Nothing to do");
+
+        info("Data checked!");
+        done_s <= true;
+        wait;
+
+    end process;
+
+end;
