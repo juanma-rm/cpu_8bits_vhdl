@@ -31,7 +31,8 @@ slib.add_source_files(
         SRC_PATH / "utils_pkg.vhd",
         SRC_PATH / "ALU.vhd",
         # Testbench
-        TB_PATH / "vunit_tb.vhd",
+        # TB_PATH / "vunit_tb.vhd",
+        TB_PATH / "alu_tb.vhd",
     ])
 
 # Add external libraries
@@ -41,19 +42,15 @@ slib.add_source_files(
 # Config Testbench: ALU
 ######################################################
 
-tb_dut = slib.test_bench("vunit_tb")
+tb_dut = slib.test_bench("alu_tb")
 
 # Config1
 config_1_dic = dict(
-    num_frames_g        = 4,
+    data_width_g        = 8,
 )
 
-# Config2
-config_2_dic = dict(config_1_dic)
-config_2_dic['num_frames_g'] = 8
-
 # Iterate all configs and add to tb_dut
-config_list = [config_1_dic, config_2_dic]
+config_list = [config_1_dic]
 for pos in range(len(config_list)):
     config_dic = config_list[pos]
     tb_dut.add_config(
