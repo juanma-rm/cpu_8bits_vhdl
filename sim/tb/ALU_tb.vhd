@@ -49,9 +49,9 @@ architecture bench of ALU_tb is
     -- dut signals
 
     signal operation_s  : alu_op_t;
-    signal operand_a_s  : std_logic_vector(data_width_c - 1 downto 0);
-    signal operand_b_s  : std_logic_vector(data_width_c - 1 downto 0);
-    signal result_s     : std_logic_vector(data_width_c - 1 downto 0);
+    signal operand_a_s  : std_logic_vector(data_width_g - 1 downto 0);
+    signal operand_b_s  : std_logic_vector(data_width_g - 1 downto 0);
+    signal result_s     : std_logic_vector(data_width_g - 1 downto 0);
     signal status_s     : status_flag_t;
 
     type operands_t is array (0 to 1) of integer;
@@ -59,8 +59,8 @@ architecture bench of ALU_tb is
     constant operands_list_c : operands_list_t := (
         0 => (80, 40),
         1 => (40, 80),
-        2 => (2**data_width_c - 1, 1),
-        3 => (1, 2**data_width_c - 1)
+        2 => (2**data_width_g - 1, 1),
+        3 => (1, 2**data_width_g - 1)
     );
 
     -- Sync signals
@@ -76,10 +76,10 @@ architecture bench of ALU_tb is
     end procedure; 
 
     procedure report_current_op ( 
-        opA       : in std_logic_vector(data_width_c - 1 downto 0);
-        opB       : in std_logic_vector(data_width_c - 1 downto 0);
+        opA       : in std_logic_vector(data_width_g - 1 downto 0);
+        opB       : in std_logic_vector(data_width_g - 1 downto 0);
         operation : in alu_op_t;
-        result    : in std_logic_vector(data_width_c - 1 downto 0)
+        result    : in std_logic_vector(data_width_g - 1 downto 0)
     ) is 
     begin
         report HT&HT &
@@ -95,13 +95,13 @@ architecture bench of ALU_tb is
     -- check output
 
     procedure check_result ( 
-        opA       : in std_logic_vector(data_width_c - 1 downto 0);
-        opB       : in std_logic_vector(data_width_c - 1 downto 0);
+        opA       : in std_logic_vector(data_width_g - 1 downto 0);
+        opB       : in std_logic_vector(data_width_g - 1 downto 0);
         operation : in alu_op_t;
-        result    : in std_logic_vector(data_width_c - 1 downto 0)
+        result    : in std_logic_vector(data_width_g - 1 downto 0)
     ) is 
 
-        variable opA_sig_v, opB_sig_v, result_sig_v : signed(data_width_c - 1 downto 0);
+        variable opA_sig_v, opB_sig_v, result_sig_v : signed(data_width_g - 1 downto 0);
         variable test_passed_v : boolean := false;
 
     begin
@@ -141,8 +141,6 @@ begin
         -- Common code between tests here
         test_runner_setup(runner, runner_cfg);
         set_stop_level(failure);
-        wait for 500 ns;
-       
         -- Specific code depending the test
         while test_suite loop
             if run("alu_test1") then
@@ -162,7 +160,7 @@ begin
 
     ALU_inst : entity work.ALU
     generic map (
-        data_width_g => data_width_c
+        data_width_g => data_width_g
     )
     port map (
         clk_i       => clk_s,
@@ -183,11 +181,12 @@ begin
         wait until start_s and rising_edge(clk_s);
         info("Stimulus: start_sing...");
 
+        wait for 20*clk_period_ns_c; -- Wait for initial reset done
         report_header;
         for operands_iter in operands_list_c'range loop
             -- Select operands
-            operand_a_s <= std_logic_vector(to_signed(operands_list_c(operands_iter)(0), data_width_c));
-            operand_b_s <= std_logic_vector(to_signed(operands_list_c(operands_iter)(1), data_width_c));
+            operand_a_s <= std_logic_vector(to_signed(operands_list_c(operands_iter)(0), data_width_g));
+            operand_b_s <= std_logic_vector(to_signed(operands_list_c(operands_iter)(1), data_width_g));
             -- Iterate along all operators
             for operation in alu_op_t'left to alu_op_t'right loop
                 wait until rising_edge(clk_s);
