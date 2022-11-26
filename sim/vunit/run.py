@@ -30,9 +30,11 @@ slib.add_source_files(
         # Dependencies
         SRC_PATH / "utils_pkg.vhd",
         SRC_PATH / "ALU.vhd",
+        SRC_PATH / "reg_bank.vhd",
         # Testbench
         # TB_PATH / "vunit_tb.vhd",
         TB_PATH / "alu_tb.vhd",
+        TB_PATH / "reg_bank_tb.vhd",
     ])
 
 # Add external libraries
@@ -47,6 +49,27 @@ tb_dut = slib.test_bench("alu_tb")
 # Config1
 config_1_dic = dict(
     data_width_g        = 8,
+)
+
+# Iterate all configs and add to tb_dut
+config_list = [config_1_dic]
+for pos in range(len(config_list)):
+    config_dic = config_list[pos]
+    tb_dut.add_config(
+        name = "config" + str(pos),
+        generics = config_dic
+    )
+
+######################################################
+# Config Testbench: reg_bank
+######################################################
+
+tb_dut = slib.test_bench("reg_bank_tb")
+
+# Config1
+config_1_dic = dict(
+    data_width_g   = 8,
+    nb_regs_g      = 10
 )
 
 # Iterate all configs and add to tb_dut
