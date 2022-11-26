@@ -10,10 +10,10 @@ import sys
 # Paths, sources and dependencies
 ######################################################
 
-# Needed because when you call this script with python, maybe you are not in the same directory where the run.py is. To avoid this issue, we get the path of the run.py.
 ROOT = Path(__file__).parent
-SRC_PATH = ROOT / "../src"
-# PRJ_PATH = ROOT / "../projects/myProject"
+PRJ_PATH = ROOT / "../../"
+SRC_PATH = PRJ_PATH / "src"
+TB_PATH = PRJ_PATH / "sim/tb"
 
 # Create VUnit instance by parsing command line arguments
 VU = VUnit.from_argv()
@@ -31,7 +31,7 @@ slib.add_source_files(
         SRC_PATH / "utils_pkg.vhd",
         SRC_PATH / "ALU.vhd",
         # Testbench
-        ROOT / "vunit_tb.vhd",
+        TB_PATH / "vunit_tb.vhd",
     ])
 
 # Add external libraries
