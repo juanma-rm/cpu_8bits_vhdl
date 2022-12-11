@@ -10,7 +10,7 @@
 --!     
 --! Inout:
 --!     - data_bus_io
-
+--!
 ----------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------
 
@@ -38,7 +38,15 @@ entity reg_bank is
         data_bus_io  : inout std_logic_vector(data_width_g - 1 downto 0);
         select_i     : in std_logic_vector(log2_ceil(nb_regs_g) - 1 downto 0);
         rd_en_i      : in std_logic;
-        wr_en_i      : in std_logic
+        wr_en_i      : in std_logic;
+        regA_o       : out std_logic_vector(data_width_g - 1 downto 0);
+        regB_o       : out std_logic_vector(data_width_g - 1 downto 0);
+        regACC_o     : out std_logic_vector(data_width_g - 1 downto 0);
+        regStatus_o  : out std_logic_vector(data_width_g - 1 downto 0);
+        regPC_o      : out std_logic_vector(data_width_g - 1 downto 0);
+        regMAR_o     : out std_logic_vector(data_width_g - 1 downto 0);
+        regMDR_o     : out std_logic_vector(data_width_g - 1 downto 0);
+        regCIR_o     : out std_logic_vector(data_width_g - 1 downto 0)
     );
 end reg_bank;
 
@@ -70,5 +78,15 @@ begin
     end process;
 
     data_bus_io <= reg_bank_s(select_s) when (rd_en_i = '1' and wr_en_i = '0') else (others => 'Z');
+
+    -- Wiring registers directly used from the rest of the system (alu, control registers, ...)
+    regA_o       <= reg_bank_s(register_map_t'pos(regA));
+    regB_o       <= reg_bank_s(register_map_t'pos(regB));
+    regACC_o     <= reg_bank_s(register_map_t'pos(acc));
+    regStatus_o  <= reg_bank_s(register_map_t'pos(status));
+    regPC_o      <= reg_bank_s(register_map_t'pos(pc));
+    regMAR_o     <= reg_bank_s(register_map_t'pos(mar));
+    regMDR_o     <= reg_bank_s(register_map_t'pos(mdr));
+    regCIR_o     <= reg_bank_s(register_map_t'pos(cir));
 
 end behavioural;

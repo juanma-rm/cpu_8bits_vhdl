@@ -6,6 +6,7 @@ package utils_pkg is
 
     constant data_width_c : integer	:= 8;
     constant nb_regs_c    : integer	:= 8;
+    type register_map_t is (regA, regB, acc, status, pc, mar, mdr, cir, gpr_base);
     
     type alu_op_t is (alu_add, alu_sub, alu_not, alu_or, alu_and, alu_nor, alu_nand, alu_xor);
     type status_flag_t is record
